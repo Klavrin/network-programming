@@ -12,6 +12,7 @@ javac -d java/out $(find java/src -name "*.java")
 
 ```bash
 python3 number-generator.py            # numbers.txt, 50 000 000 integers
+java -cp java/out Main split           # parts/part-1.txt ... part-8.txt, 6 250 000 each (Task 2)
 python3 verify.py                      # reference totals
 ```
 
@@ -19,21 +20,35 @@ python3 verify.py                      # reference totals
 
 | Task | Command |
 |------|---------|
-| 1a – split the file into byte ranges  | `java -cp java/out Main 1a <threads> [file]` |
+| 1a – split the file into byte ranges | `java -cp java/out Main 1a <threads> [file]` |
+| 1b – count an in-memory array        | `java -cp java/out Main 1b <unsafe\|lock\|local> [threads] [file]` |
 | 1c – reader + bounded queue + workers | `java -cp java/out Main 1c <workers> [file]` |
+| 2  – whole files from a USB drive    | `java -cp java/out Main 2 <threads> <directory>` |
 
-Each run prints one line:
+`threads` in 1b defaults to the number of logical processors. Each run prints one line:
 
 ```
 1a threads=8           negative=25005851 positive=24994122 zero=27 total=50000000 time=239ms peakHeap=9MB
 ```
 
-`java/run.sh` builds and runs every configuration (1, 2, 4 … 64 threads), adding the peak RSS of the whole process
-from `/usr/bin/time`. `peakHeap` covers Java objects only; `rss` also covers thread stacks and the JVM itself.
+`java/run.sh` builds and runs every Task 1 configuration (1, 2, 4 … 64 threads; `unsafe` three times), adding the
+peak RSS of the whole process from `/usr/bin/time`. `peakHeap` covers Java objects only; `rss` also covers thread
+stacks and the JVM itself.
 
 ```bash
-java/run.sh            # 1a and 1c
+java/run.sh            # all of Task 1
 java/run.sh 1c         # one task
+java/run.sh 2 4 /Volumes/USB/parts   # Task 2: re-plug the drive before every run
+```
+
+## Test
+
+`java/test.sh` runs every task and compares its totals with `verify.py`; `1b unsafe` must differ (race condition).
+It prints `PASS` or `FAIL` per run and exits non-zero on any failure.
+
+```bash
+java/test.sh                      # Task 2 from parts/ (made automatically if missing)
+java/test.sh /Volumes/USB/parts    # Task 2 from the USB drive
 ```
 
 ## Code
@@ -50,8 +65,13 @@ java/src/
 │   └── Memory.java            peak Java heap
 ├── task1a/
 │   └── SplitFileCounter.java  each thread parses its own byte range of the file
-└── task1c/
-    └── ProducerConsumer.java  reader thread → ArrayBlockingQueue (100 × 10 000 lines) → workers
+├── task1b/
+│   └── ArrayCounter.java      unsafe / lock / local counting of an in-memory array
+├── task1c/
+│   └── ProducerConsumer.java  reader thread → ArrayBlockingQueue (100 × 10 000 lines) → workers
+└── task2/
+    ├── Splitter.java          makes parts/part-1.txt ... part-8.txt
+    └── ManyFilesCounter.java  each thread reads whole files with Files.readAllBytes
 ```
 
 **Part boundaries (1a).** A line belongs to the part that holds its first byte. Each thread opens the file one byte
