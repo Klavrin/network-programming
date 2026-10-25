@@ -41,6 +41,22 @@ java/run.sh 1c         # one task
 java/run.sh 2 4 /Volumes/USB/parts   # Task 2: re-plug the drive before every run
 ```
 
+### Task 2 without a USB drive
+
+`java/sim-usb.sh` (macOS, no sudo) puts `parts/` in a read-only disk image and mounts it with
+`hdiutil` from a local HTTP server (`java/usb-server.py`) that has a single bandwidth cap. The program
+reads a real mounted volume with the unchanged `Main 2`, and all threads share one bus speed.
+Detaching and reattaching the image before each run empties its file cache, which stands in for
+unplugging the drive. Spotlight cannot index the volume.
+
+```bash
+java/sim-usb.sh up 25        # build image, start server, mount; 25 MB/s ≈ a USB 2.0 stick
+java/sim-usb.sh bench        # 1, 2, 4 threads, re-plugging before each
+java/sim-usb.sh run 2        # a single configuration
+java/sim-usb.sh down         # unmount + stop server   (clean: also delete the image)
+java/test.sh .sim-usb/mnt/parts   # correctness of Task 2 on the simulated drive
+```
+
 ## Test
 
 `java/test.sh` runs every task and compares its totals with `verify.py`; `1b unsafe` must differ (race condition).

@@ -14,7 +14,7 @@ import task2.Splitter;
  *   1a    <threads> [file]
  *   1b    <unsafe|lock|local> [threads] [file]
  *   1c    <workers> [file]
- *   2     <threads> <directory>
+ *   2     <threads> <directory> [MB/s]
  *   split [file] [directory] [parts]
  */
 public final class Main {
@@ -55,8 +55,13 @@ public final class Main {
       case "2" -> {
         int threads = Integer.parseInt(args[1]);
         Path directory = Path.of(args[2]);
-        measure("2 threads=" + threads, () ->
-          ManyFilesCounter.count(directory, threads)
+        double megabytesPerSecond = args.length > 3
+          ? Double.parseDouble(args[3])
+          : 0;
+        String limit =
+          megabytesPerSecond > 0 ? " limit=" + megabytesPerSecond + "MB/s" : "";
+        measure("2 threads=" + threads + limit, () ->
+          ManyFilesCounter.count(directory, threads, megabytesPerSecond)
         );
       }
       case "split" -> Splitter.split(
@@ -95,7 +100,7 @@ public final class Main {
         1a    <threads> [file]                    split the file into byte ranges
         1b    <unsafe|lock|local> [threads] [file] count an in-memory array
         1c    <workers> [file]                    reader thread + bounded queue + workers
-        2     <threads> <directory>               whole files (part-*.txt) as the unit of work
+        2     <threads> <directory> [MB/s]        whole files (part-*.txt) as the unit of work
         split [file] [directory] [parts]          make part-1.txt ... part-8.txt for Task 2"""
     );
   }
