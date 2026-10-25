@@ -16,6 +16,16 @@ java -cp java/out Main split           # parts/part-1.txt ... part-8.txt, 6 250 
 python3 verify.py                      # reference totals
 ```
 
+## Quick start
+
+```bash
+./lab.sh -cli     # arrow-key menu: Task 1a, 1b, 1c, all of Task 1, or Task 2 (↑/↓ or j/k, Enter, q)
+./lab.sh 1        # or directly: 1a | 1b | 1c | 1 | 2 | 2 /Volumes/USB/parts
+```
+
+`lab.sh` holds only the menu entries and the commands they run (`java/run.sh`, `java/sim-usb.sh`, described below).
+The reusable arrow-key menu widget is in `cli/menu.sh`.
+
 ## Run
 
 | Task | Command |
